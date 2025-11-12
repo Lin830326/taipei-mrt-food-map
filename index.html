@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台北捷運智能美食地圖</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- API 設定提示橫幅 -->
+    <div class="api-banner" id="apiBanner">
+        <div class="banner-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="bannerMessage">正在檢查 API 設定...</span>
+            <button onclick="showApiSetup()" class="banner-btn">設定 API</button>
+        </div>
+    </div>
+
+    <!-- 主標題 -->
+    <header class="header">
+        <h1><i class="fas fa-subway"></i> 台北捷運智能美食地圖</h1>
+        <p>AI驅動的美食探索 - 發現捷運站周邊10分鐘步行美食</p>
+    </header>
+
+    <!-- 智能控制面板 -->
+    <section class="controls-section">
+        <div class="smart-controls">
+            <div class="control-grid">
+                <div class="control-group">
+                    <label class="control-label">搜尋半徑</label>
+                    <select class="control-input" id="radiusSelect">
+                        <option value="500">500公尺 (6分鐘)</option>
+                        <option value="800" selected>800公尺 (10分鐘)</option>
+                        <option value="1200">1200公尺 (15分鐘)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">價格範圍</label>
+                    <div class="price-range-container">
+                        <input type="range" min="1" max="4" value="3" 
+                               class="control-input price-range-slider" id="priceRange">
+                        <div class="price-display" id="priceDisplay">平價~中等</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">排序方式</label>
+                    <select class="control-input" id="sortSelect">
+                        <option value="smart">智能推薦</option>
+                        <option value="rating">評分優先</option>
+                        <option value="distance">距離優先</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <input type="checkbox" id="openNowCheck"> 只顯示營業中
+                    </label>
+                </div>
+            </div>
+
+            <div class="quick-filters">
+                <button class="filter-chip active" data-type="">全部美食</button>
+                <button class="filter-chip" data-type="restaurant">餐廳</button>
+                <button class="filter-chip" data-type="cafe">咖啡廳</button>
+                <button class="filter-chip" data-type="bakery">烘焙店</button>
+                <button class="filter-chip" data-type="meal_takeaway">外帶美食</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 熱門站點 -->
+    <section class="popular-section">
+        <div class="popular-stations">
+            <div class="popular-title">
+                <i class="fas fa-fire"></i>
+                <span>熱門搜尋站點</span>
+            </div>
+            <div class="popular-list" id="popularList">
+                <button class="popular-station" onclick="selectStation('台北車站')">台北車站</button>
+                <button class="popular-station" onclick="selectStation('西門')">西門</button>
+                <button class="popular-station" onclick="selectStation('信義安和')">信義安和</button>
+                <button class="popular-station" onclick="selectStation('公館')">公館</button>
+                <button class="popular-station" onclick="selectStation('士林')">士林</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要內容區 -->
+    <main class="main-container">
+        <!-- 側邊欄 - 捷運站列表 -->
+        <aside class="sidebar">
+            <!-- 紅線 -->
+            <div class="line-section">
+                <div class="line-header line-red" onclick="toggleLine('red')">
+                    <i class="fas fa-train"></i>
+                    <span>紅線（淡水信義）</span>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="stations" id="red-stations">
+                    <button class="station-item" onclick="selectStation('象山')">象山</button>
+                    <button class="station-item" onclick="selectStation('台北101/世貿')">台北101/世貿</button>
+                    <button class="station-item" onclick="selectStation('信義安和')">信義安和</button>
+                    <button class="station-item" onclick="selectStation('大安')">大安</button>
+                    <button class="station-item" onclick="selectStation('大安森林公園')">大安森林公園</button>
+                    <button class="station-item" onclick="selectStation('東門')">東門</button>
+                    <button class="station-item" onclick="selectStation('中正紀念堂')">中正紀念堂</button>
+                    <button class="station-item" onclick="selectStation('台大醫院')">台大醫院</button>
+                    <button class="station-item" onclick="selectStation('台北車站')">台北車站</button>
+                    <button class="station-item" onclick="selectStation('中山')">中山</button>
+                    <button class="station-item" onclick="selectStation('雙連')">雙連</button>
+                    <button class="station-item" onclick="selectStation('民權西路')">民權西路</button>
+                    <button class="station-item" onclick="selectStation('圓山')">圓山</button>
+                    <button class="station-item" onclick="selectStation('劍潭')">劍潭</button>
+                    <button class="station-item" onclick="selectStation('士林')">士林</button>
+                    <button class="station-item" onclick="selectStation('芝山')">芝山</button>
+                    <button class="station-item" onclick="selectStation('明德')">明德</button>
+                    <button class="station-item" onclick="selectStation('石牌')">石牌</button>
+                    <button class="station-item" onclick="selectStation('唭里岸')">唭里岸</button>
+                    <button class="station-item" onclick="selectStation('奇岩')">奇岩</button>
+                    <button class="station-item" onclick="selectStation('北投')">北投</button>
+                    <button class="station-item" onclick="selectStation('新北投')">新北投</button>
+                    <button class="station-item" onclick="selectStation('復興崗')">復興崗</button>
+                    <button class="station-item" onclick="selectStation('忠義')">忠義</button>
+                    <button class="station-item" onclick="selectStation('關渡')">關渡</button>
+                    <button class="station-item" onclick="selectStation('竹圍')">竹圍</button>
+                    <button class="station-item" onclick="selectStation('紅樹林')">紅樹林</button>
+                    <button class="station-item" onclick="selectStation('淡水')">淡水</button>
+                </div>
+            </div>
+
+            <!-- 藍線 -->
+            <div class="line-section">
+                <div class="line-header line-blue" onclick="toggleLine('blue')">
+                    <i class="fas fa-train"></i>
+                    <span>藍線（板南）</span>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="stations" id="blue-stations">
+                    <button class="station-item" onclick="selectStation('頂埔')">頂埔</button>
+                    <button class="station-item" onclick="selectStation('永寧')">永寧</button>
+                    <button class="station-item" onclick="selectStation('土城')">土城</button>
+                    <button class="station-item" onclick="selectStation('海山')">海山</button>
+                    <button class="station-item" onclick="selectStation('亞東醫院')">亞東醫院</button>
+                    <button class="station-item" onclick="selectStation('府中')">府中</button>
+                    <button class="station-item" onclick="selectStation('板橋')">板橋</button>
+                    <button class="station-item" onclick="selectStation('新埔')">新埔</button>
+                    <button class="station-item" onclick="selectStation('江子翠')">江子翠</button>
+                    <button class="station-item" onclick="selectStation('龍山寺')">龍山寺</button>
+                    <button class="station-item" onclick="selectStation('西門')">西門</button>
+                    <button class="station-item" onclick="selectStation('善導寺')">善導寺</button>
+                    <button class="station-item" onclick="selectStation('忠孝新生')">忠孝新生</button>
+                    <button class="station-item" onclick="selectStation('忠孝復興')">忠孝復興</button>
+                    <button class="station-item" onclick="selectStation('忠孝敦化')">忠孝敦化</button>
+                    <button class="station-item" onclick="selectStation('國父紀念館')">國父紀念館</button>
+                    <button class="station-item" onclick="selectStation('市政府')">市政府</button>
+                    <button class="station-item" onclick="selectStation('永春')">永春</button>
+                    <button class="station-item" onclick="selectStation('後山埤')">後山埤</button>
+                    <button class="station-item" onclick="selectStation('昆陽')">昆陽</button>
+                    <button class="station-item" onclick="selectStation('南港')">南港</button>
+                    <button class="station-item" onclick="selectStation('南港展覽館')">南港展覽館</button>
+                </div>
+            </div>
+
+            <!-- 綠線 -->
+            <div class="line-section">
+                <div class="line-header line-green" onclick="toggleLine('green')">
+                    <i class="fas fa-train"></i>
+                    <span>綠線（松山新店）</span>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="stations" id="green-stations">
+                    <button class="station-item" onclick="selectStation('新店')">新店</button>
+                    <button class="station-item" onclick="selectStation('新店區公所')">新店區公所</button>
+                    <button class="station-item" onclick="selectStation('七張')">七張</button>
+                    <button class="station-item" onclick="selectStation('小碧潭')">小碧潭</button>
+                    <button class="station-item" onclick="selectStation('大坪林')">大坪林</button>
+                    <button class="station-item" onclick="selectStation('景美')">景美</button>
+                    <button class="station-item" onclick="selectStation('萬隆')">萬隆</button>
+                    <button class="station-item" onclick="selectStation('公館')">公館</button>
+                    <button class="station-item" onclick="selectStation('台電大樓')">台電大樓</button>
+                    <button class="station-item" onclick="selectStation('古亭')">古亭</button>
+                    <button class="station-item" onclick="selectStation('小南門')">小南門</button>
+                    <button class="station-item" onclick="selectStation('北門')">北門</button>
+                    <button class="station-item" onclick="selectStation('松江南京')">松江南京</button>
+                    <button class="station-item" onclick="selectStation('南京復興')">南京復興</button>
+                    <button class="station-item" onclick="selectStation('台北小巨蛋')">台北小巨蛋</button>
+                    <button class="station-item" onclick="selectStation('南京三民')">南京三民</button>
+                    <button class="station-item" onclick="selectStation('松山')">松山</button>
+                </div>
+            </div>
+
+            <!-- 橘線 -->
+            <div class="line-section">
+                <div class="line-header line-orange" onclick="toggleLine('orange')">
+                    <i class="fas fa-train"></i>
+                    <span>橘線（中和新蘆）</span>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="stations" id="orange-stations">
+                    <button class="station-item" onclick="selectStation('南勢角')">南勢角</button>
+                    <button class="station-item" onclick="selectStation('景安')">景安</button>
+                    <button class="station-item" onclick="selectStation('永安市場')">永安市場</button>
+                    <button class="station-item" onclick="selectStation('頂溪')">頂溪</button>
+                    <button class="station-item" onclick="selectStation('行天宮')">行天宮</button>
+                    <button class="station-item" onclick="selectStation('中山國小')">中山國小</button>
+                    <button class="station-item" onclick="selectStation('大橋頭')">大橋頭</button>
+                    <button class="station-item" onclick="selectStation('台北橋')">台北橋</button>
+                    <button class="station-item" onclick="selectStation('菜寮')">菜寮</button>
+                    <button class="station-item" onclick="selectStation('三重')">三重</button>
+                    <button class="station-item" onclick="selectStation('先嗇宮')">先嗇宮</button>
+                    <button class="station-item" onclick="selectStation('頭前庄')">頭前庄</button>
+                    <button class="station-item" onclick="selectStation('新莊')">新莊</button>
+                    <button class="station-item" onclick="selectStation('輔大')">輔大</button>
+                    <button class="station-item" onclick="selectStation('丹鳳')">丹鳳</button>
+                    <button class="station-item" onclick="selectStation('迴龍')">迴龍</button>
+                    <button class="station-item" onclick="selectStation('三重國小')">三重國小</button>
+                    <button class="station-item" onclick="selectStation('徐匯中學')">徐匯中學</button>
+                    <button class="station-item" onclick="selectStation('三和國中')">三和國中</button>
+                    <button class="station-item" onclick="selectStation('三民高中')">三民高中</button>
+                    <button class="station-item" onclick="selectStation('蘆洲')">蘆洲</button>
+                </div>
+            </div>
+
+            <!-- 棕線 -->
+            <div class="line-section">
+                <div class="line-header line-brown" onclick="toggleLine('brown')">
+                    <i class="fas fa-train"></i>
+                    <span>棕線（文湖）</span>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="stations" id="brown-stations">
+                    <button class="station-item" onclick="selectStation('動物園')">動物園</button>
+                    <button class="station-item" onclick="selectStation('木柵')">木柵</button>
+                    <button class="station-item" onclick="selectStation('萬芳社區')">萬芳社區</button>
+                    <button class="station-item" onclick="selectStation('萬芳醫院')">萬芳醫院</button>
+                    <button class="station-item" onclick="selectStation('辛亥')">辛亥</button>
+                    <button class="station-item" onclick="selectStation('麟光')">麟光</button>
+                    <button class="station-item" onclick="selectStation('六張犁')">六張犁</button>
+                    <button class="station-item" onclick="selectStation('科技大樓')">科技大樓</button>
+                    <button class="station-item" onclick="selectStation('中山國中')">中山國中</button>
+                    <button class="station-item" onclick="selectStation('松山機場')">松山機場</button>
+                    <button class="station-item" onclick="selectStation('大直')">大直</button>
+                    <button class="station-item" onclick="selectStation('劍南路')">劍南路</button>
+                    <button class="station-item" onclick="selectStation('西湖')">西湖</button>
+                    <button class="station-item" onclick="selectStation('港墘')">港墘</button>
+                    <button class="station-item" onclick="selectStation('文德')">文德</button>
+                    <button class="station-item" onclick="selectStation('內湖')">內湖</button>
+                    <button class="station-item" onclick="selectStation('大湖公園')">大湖公園</button>
+                    <button class="station-item" onclick="selectStation('葫洲')">葫洲</button>
+                    <button class="station-item" onclick="selectStation('東湖')">東湖</button>
+                    <button class="station-item" onclick="selectStation('南港軟體園區')">南港軟體園區</button>
+                </div>
+            </div>
+
+            <!-- 黃線 -->
+            <div class="line-section">
+                <div class="line-header line-yellow" onclick="toggleLine('yellow')">
+                    <i class="fas fa-train"></i>
+                    <span>黃線（環狀線）</span>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </div>
+                <div class="stations" id="yellow-stations">
+                    <button class="station-item" onclick="selectStation('十四張')">十四張</button>
+                    <button class="station-item" onclick="selectStation('秀朗橋')">秀朗橋</button>
+                    <button class="station-item" onclick="selectStation('景平')">景平</button>
+                    <button class="station-item" onclick="selectStation('中和')">中和</button>
+                    <button class="station-item" onclick="selectStation('橋和')">橋和</button>
+                    <button class="station-item" onclick="selectStation('中原')">中原</button>
+                    <button class="station-item" onclick="selectStation('板新')">板新</button>
+                    <button class="station-item" onclick="selectStation('新埔民生')">新埔民生</button>
+                    <button class="station-item" onclick="selectStation('幸福')">幸福</button>
+                    <button class="station-item" onclick="selectStation('新北產業園區')">新北產業園區</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主內容區 -->
+        <div class="content-area">
+            <!-- 地圖區 -->
+            <section class="map-section">
+                <div class="map-header">
+                    <div class="station-info">
+                        <h2 id="currentStation">請選擇捷運站</h2>
+                        <div class="loading-indicator" id="loadingIndicator">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>搜尋中...</span>
+                        </div>
+                    </div>
+                    <div class="search-stats" id="searchStats"></div>
+                </div>
+                <div id="map" class="map-container"></div>
+            </section>
+
+            <!-- 美食列表區 -->
+            <section class="food-section">
+                <div class="food-header">
+                    <h3><i class="fas fa-utensils"></i> 智能美食推薦</h3>
+                    <button class="search-btn" id="searchBtn" onclick="performSmartSearch()">
+                        <i class="fas fa-magic"></i> 智能搜尋
+                    </button>
+                </div>
+                <div class="food-grid" id="foodGrid">
+                    <div class="welcome-card">
+                        <div class="welcome-icon"><i class="fas fa-map-marked-alt"></i></div>
+                        <h3>歡迎使用台北捷運美食地圖</h3>
+                        <p>請選擇左側的捷運站，系統將為您推薦周邊美食</p>
+                        <div class="features">
+                            <div class="feature">
+                                <i class="fas fa-walking"></i>
+                                <span>步行10分鐘內</span>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-star"></i>
+                                <span>智能評分推薦</span>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-clock"></i>
+                                <span>即時營業狀態</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- API 設定模態框 -->
+    <div class="modal" id="apiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔑 API 設定指南</h2>
+                <span class="close-btn" onclick="closeApiModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="setup-steps">
+                    <h3>設定步驟：</h3>
+                    <ol>
+                        <li>開啟 <code>config.js</code> 檔案</li>
+                        <li>找到 <code>GOOGLE_API_KEY</code> 設定</li>
+                        <li>將 <code>YOUR_API_KEY_HERE</code> 替換為您的 API Key</li>
+                        <li>儲存檔案並重新整理頁面</li>
+                    </ol>
+                </div>
+                <div class="api-help">
+                    <h3>如何取得 API Key？</h3>
+                    <p>1. 前往 <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></p>
+                    <p>2. 創建專案並啟用以下 API：</p>
+                    <ul>
+                        <li>Maps JavaScript API</li>
+                        <li>Places API</li>
+                        <li>Geocoding API</li>
+                    </ul>
+                    <p>3. 創建 API 金鑰並設定限制</p>
+                </div>
+                <div class="current-status" id="apiStatus">
+                    <strong>當前狀態：</strong> <span id="apiStatusText">檢查中...</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeApiModal()">關閉</button>
+                <button class="btn btn-primary" onclick="window.location.reload()">重新載入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入 Scripts -->
+    <script src="config.js"></script>
+    <!-- Google Maps API - 使用 loading=async 參數優化效能 -->
+    <script async defer 
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAIfX-FY50WPtoT5IxxpDllQIWv2-qEzc&libraries=places,geometry&loading=async&callback=initMap">
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

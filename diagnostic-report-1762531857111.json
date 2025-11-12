@@ -1,0 +1,11 @@
+{
+  "tests": [],
+  "startTime": "2025-11-07T16:10:38.181Z",
+  "endTime": "2025-11-07T16:10:45.129Z",
+  "passed": 10,
+  "failed": 13,
+  "warnings": 1,
+  "duration": 6948,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+  "timestamp": "2025-11-07T16:10:57.110Z"
+}

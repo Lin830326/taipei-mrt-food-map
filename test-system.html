@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統診斷工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .test-result {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .progress {
+            margin: 20px 0;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 系統完整診斷工具</h1>
+        <p class="subtitle">檢查所有系統組件和 API 連線狀態</p>
+        
+        <div class="button-group">
+            <button onclick="runFullDiagnostic()">🚀 完整診斷</button>
+            <button onclick="testGoogleMapsAPI()">🗺️ 測試 Google Maps</button>
+            <button onclick="testConfigOnly()">⚙️ 僅測試配置</button>
+            <button onclick="window.location.href='index.html'" style="background: #28a745;">✅ 開啟主程式</button>
+        </div>
+        
+        <div class="test-section" style="background: #e7f3ff; border-left-color: #2196F3;">
+            <div class="test-title">ℹ️ 關於 DOM 元素檢查</div>
+            <div class="test-result info">
+                <strong>注意:</strong> 此診斷頁面會顯示 DOM 元素缺失,這是正常的!<br><br>
+                
+                原因:<br>
+                • 這些元素 (#map, #foodGrid, #searchBtn 等) 只存在於 <code>index.html</code><br>
+                • 診斷工具檢查的是當前頁面 (<code>test-system.html</code>)<br><br>
+                
+                解決方案:<br>
+                1. 點擊上方綠色「✅ 開啟主程式」按鈕<br>
+                2. 按 F12 開啟開發者工具<br>
+                3. 查看 Console 確認沒有錯誤訊息<br>
+                4. 查看地圖是否正常顯示
+            </div>
+        </div>
+        
+        <div id="progress" class="progress"></div>
+        <div id="results"></div>
+    </div>
+
+    <!-- 載入配置 -->
+    <script src="config.js"></script>
+    
+    <!-- Google Maps API -->
+    <script async defer 
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAIfX-FY50WPtoT5IxxpDllQIWv2-qEzc&libraries=places,geometry&callback=onGoogleMapsLoaded">
+    </script>
+    
+    <script>
+        let googleMapsLoaded = false;
+        
+        function onGoogleMapsLoaded() {
+            googleMapsLoaded = true;
+            console.log('✅ Google Maps API 已載入');
+            updateProgress('Google Maps API 已載入完成');
+        }
+        
+        function updateProgress(message) {
+            const progress = document.getElementById('progress');
+            progress.textContent = message;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            updateProgress('');
+        }
+        
+        function addResult(title, status, message, details) {
+            const results = document.getElementById('results');
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            
+            let statusClass = 'info';
+            let icon = 'ℹ️';
+            
+            if (status === 'pass') {
+                statusClass = 'pass';
+                icon = '✅';
+            } else if (status === 'fail') {
+                statusClass = 'fail';
+                icon = '❌';
+            } else if (status === 'warning') {
+                statusClass = 'warning';
+                icon = '⚠️';
+            }
+            
+            section.innerHTML = `
+                <div class="test-title">${icon} ${title}</div>
+                <div class="test-result ${statusClass}">
+                    ${message}
+                    ${details ? `<pre>${details}</pre>` : ''}
+                </div>
+            `;
+            
+            results.appendChild(section);
+        }
+        
+        async function runFullDiagnostic() {
+            clearResults();
+            updateProgress('開始完整系統診斷...');
+            
+            // 1. 檢查 CONFIG
+            updateProgress('1/5 檢查配置檔案...');
+            await sleep(100);
+            checkConfig();
+            
+            // 2. 檢查 API Key
+            updateProgress('2/5 檢查 API Key...');
+            await sleep(100);
+            checkApiKey();
+            
+            // 3. 檢查 API Settings
+            updateProgress('3/5 檢查 API 設定...');
+            await sleep(100);
+            checkApiSettings();
+            
+            // 4. 檢查 SCORING_WEIGHTS
+            updateProgress('4/5 檢查評分權重...');
+            await sleep(100);
+            checkScoringWeights();
+            
+            // 5. 檢查 Google Maps API
+            updateProgress('5/5 檢查 Google Maps API...');
+            await sleep(100);
+            testGoogleMapsAPI();
+            
+            updateProgress('✅ 診斷完成! 如需測試完整功能,請點擊「開啟主程式」按鈕');
+        }
+        
+        async function testConfigOnly() {
+            clearResults();
+            updateProgress('檢查配置檔案...');
+            
+            await sleep(100);
+            checkConfig();
+            await sleep(100);
+            checkApiKey();
+            await sleep(100);
+            checkApiSettings();
+            await sleep(100);
+            checkScoringWeights();
+            
+            updateProgress('✅ 配置檢查完成!');
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function checkConfig() {
+            if (typeof CONFIG === 'undefined') {
+                addResult('配置檔案檢查', 'fail', 
+                    '❌ CONFIG 未定義',
+                    'config.js 檔案未正確載入或有語法錯誤');
+                return false;
+            }
+            
+            addResult('配置檔案檢查', 'pass', 
+                '✅ CONFIG 物件已成功載入');
+            return true;
+        }
+        
+        function checkApiKey() {
+            if (typeof CONFIG === 'undefined') return;
+            
+            if (!CONFIG.GOOGLE_API_KEY) {
+                addResult('API Key 檢查', 'fail', 
+                    '❌ GOOGLE_API_KEY 未設定',
+                    '請在 config.js 中設定您的 Google API Key');
+                return false;
+            }
+            
+            if (CONFIG.GOOGLE_API_KEY.includes('YOUR_API_KEY')) {
+                addResult('API Key 檢查', 'warning', 
+                    '⚠️ API Key 尚未替換為真實值',
+                    `當前值: ${CONFIG.GOOGLE_API_KEY}`);
+                return false;
+            }
+            
+            addResult('API Key 檢查', 'pass', 
+                '✅ API Key 已正確設定',
+                `Key: ${CONFIG.GOOGLE_API_KEY.substring(0, 25)}...${CONFIG.GOOGLE_API_KEY.substring(CONFIG.GOOGLE_API_KEY.length - 5)}\n長度: ${CONFIG.GOOGLE_API_KEY.length} 字元`);
+            return true;
+        }
+        
+        function checkApiSettings() {
+            if (typeof CONFIG === 'undefined') return;
+            
+            if (!CONFIG.API_SETTINGS) {
+                addResult('API 設定檢查', 'fail', 
+                    '❌ API_SETTINGS 物件未定義',
+                    '請在 config.js 中加入 API_SETTINGS 物件');
+                return false;
+            }
+            
+            const checks = [];
+            let allPass = true;
+            
+            // 檢查 TAIPEI_CENTER
+            if (CONFIG.API_SETTINGS.TAIPEI_CENTER) {
+                const center = CONFIG.API_SETTINGS.TAIPEI_CENTER;
+                if (center.lat && center.lng) {
+                    checks.push(`✅ TAIPEI_CENTER: {lat: ${center.lat}, lng: ${center.lng}}`);
+                } else {
+                    checks.push(`❌ TAIPEI_CENTER 缺少 lat 或 lng`);
+                    allPass = false;
+                }
+            } else {
+                checks.push(`❌ TAIPEI_CENTER 未定義`);
+                allPass = false;
+            }
+            
+            // 檢查其他設定
+            checks.push(`${CONFIG.API_SETTINGS.MAX_RESULTS ? '✅' : '❌'} MAX_RESULTS: ${CONFIG.API_SETTINGS.MAX_RESULTS || 'undefined'}`);
+            checks.push(`${CONFIG.API_SETTINGS.DEFAULT_SEARCH_RADIUS ? '✅' : '❌'} DEFAULT_SEARCH_RADIUS: ${CONFIG.API_SETTINGS.DEFAULT_SEARCH_RADIUS || 'undefined'}`);
+            checks.push(`${CONFIG.API_SETTINGS.WALKING_SPEED ? '✅' : '⚠️'} WALKING_SPEED: ${CONFIG.API_SETTINGS.WALKING_SPEED || 'undefined'}`);
+            
+            if (allPass) {
+                addResult('API 設定檢查', 'pass', 
+                    '✅ API_SETTINGS 所有必要屬性都已定義',
+                    checks.join('\n'));
+            } else {
+                addResult('API 設定檢查', 'warning', 
+                    '⚠️ API_SETTINGS 有部分屬性缺失',
+                    checks.join('\n'));
+            }
+            
+            return allPass;
+        }
+        
+        function checkScoringWeights() {
+            if (typeof CONFIG === 'undefined') return;
+            
+            if (!CONFIG.SCORING_WEIGHTS) {
+                addResult('評分權重檢查', 'fail', 
+                    '❌ SCORING_WEIGHTS 未定義',
+                    '請在 config.js 中加入 SCORING_WEIGHTS 物件');
+                return false;
+            }
+            
+            const weights = CONFIG.SCORING_WEIGHTS;
+            const checks = [];
+            
+            // 檢查是否使用小寫屬性名稱
+            const hasLowercase = 'rating' in weights;
+            const hasUppercase = 'RATING' in weights;
+            
+            if (hasUppercase && !hasLowercase) {
+                checks.push(`⚠️ 使用大寫屬性名稱 (不建議)`);
+                checks.push(`RATING: ${weights.RATING}`);
+                checks.push(`DISTANCE: ${weights.DISTANCE}`);
+                checks.push(`REVIEWS: ${weights.REVIEWS}`);
+                checks.push(`PRICE: ${weights.PRICE}`);
+                
+                addResult('評分權重檢查', 'warning', 
+                    '⚠️ 屬性名稱應改為小寫 (rating, distance, reviews, price)',
+                    checks.join('\n') + '\n\n建議修改為小寫,與 app.js 中的程式碼一致');
+                return false;
+            }
+            
+            if (hasLowercase) {
+                checks.push(`✅ rating: ${weights.rating}`);
+                checks.push(`✅ distance: ${weights.distance}`);
+                checks.push(`✅ reviews: ${weights.reviews}`);
+                checks.push(`✅ price: ${weights.price}`);
+                
+                const total = weights.rating + weights.distance + weights.reviews + weights.price;
+                checks.push(`\n總和: ${total.toFixed(2)} ${total === 1.0 ? '✅' : '⚠️ (建議為 1.0)'}`);
+                
+                addResult('評分權重檢查', 'pass', 
+                    '✅ SCORING_WEIGHTS 已正確定義 (使用小寫屬性名稱)',
+                    checks.join('\n'));
+                return true;
+            }
+            
+            addResult('評分權重檢查', 'fail', 
+                '❌ SCORING_WEIGHTS 缺少必要屬性',
+                '需要: rating, distance, reviews, price');
+            return false;
+        }
+        
+        function testGoogleMapsAPI() {
+            if (!googleMapsLoaded && typeof google === 'undefined') {
+                addResult('Google Maps API', 'warning', 
+                    '⏳ Google Maps API 正在載入中...',
+                    '請稍候幾秒鐘後再次檢查\n\n如果一直顯示此訊息,可能的原因:\n1. 網路連線問題\n2. API Key 無效\n3. API 配額已用盡\n4. 網域限制設定錯誤');
+                
+                // 5秒後再檢查一次
+                setTimeout(() => {
+                    if (typeof google !== 'undefined') {
+                        location.reload();
+                    }
+                }, 5000);
+                return false;
+            }
+            
+            if (typeof google === 'undefined') {
+                addResult('Google Maps API', 'fail', 
+                    '❌ Google Maps API 載入失敗',
+                    '請檢查:\n1. index.html 是否包含正確的 script 標籤\n2. API Key 是否有效\n3. 網路連線是否正常\n4. 瀏覽器 Console 是否有錯誤訊息');
+                return false;
+            }
+            
+            if (!google.maps) {
+                addResult('Google Maps API', 'fail', 
+                    '❌ google.maps 物件不存在',
+                    '可能原因:\n1. API 載入未完成\n2. API Key 無效或受限\n3. 配額已用盡');
+                return false;
+            }
+            
+            const checks = [];
+            checks.push(`✅ google 物件已定義`);
+            checks.push(`✅ google.maps 物件已定義`);
+            
+            // 檢查重要的 API
+            const apis = [
+                { name: 'Map', obj: google.maps.Map },
+                { name: 'places.PlacesService', obj: google.maps.places?.PlacesService },
+                { name: 'Geocoder', obj: google.maps.Geocoder },
+                { name: 'geometry', obj: google.maps.geometry }
+            ];
+            
+            apis.forEach(api => {
+                if (api.obj) {
+                    checks.push(`✅ google.maps.${api.name} 可用`);
+                } else {
+                    checks.push(`❌ google.maps.${api.name} 不可用`);
+                }
+            });
+            
+            addResult('Google Maps API', 'pass', 
+                '✅ Google Maps API 已成功載入並可用',
+                checks.join('\n'));
+            
+            // 進行實際地圖初始化測試
+            testMapInitialization();
+            
+            return true;
+        }
+        
+        function testMapInitialization() {
+            try {
+                const testDiv = document.createElement('div');
+                testDiv.style.width = '100px';
+                testDiv.style.height = '100px';
+                testDiv.style.display = 'none';
+                document.body.appendChild(testDiv);
+                
+                const testMap = new google.maps.Map(testDiv, {
+                    center: { lat: 25.0330, lng: 121.5654 },
+                    zoom: 13
+                });
+                
+                document.body.removeChild(testDiv);
+                
+                addResult('地圖初始化測試', 'pass', 
+                    '✅ 可以成功建立 Google Map 實例',
+                    '測試建立了一個臨時地圖並成功初始化');
+                
+            } catch (error) {
+                addResult('地圖初始化測試', 'fail', 
+                    '❌ 無法建立地圖實例',
+                    `錯誤訊息: ${error.message}\n\n完整錯誤:\n${error.stack}`);
+            }
+        }
+        
+        // 頁面載入後顯示提示
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('系統就緒', 'info', 
+                    'ℹ️ 診斷工具已準備就緒',
+                    '點擊上方「完整診斷」按鈕開始檢查所有系統組件');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+===============================================
+   🔑 請設定您的 Google Maps API Key
+===============================================
+
+現在請按照以下步驟設定您的 API Key:
+
+步驟 1️⃣: 開啟 config.js 檔案
+步驟 2️⃣: 找到第 5 行的 GOOGLE_API_KEY
+步驟 3️⃣: 將 'YOUR_API_KEY_HERE' 替換為您的實際 API Key
+步驟 4️⃣: 儲存檔案
+
+範例:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+修改前:
+GOOGLE_API_KEY: 'YOUR_API_KEY_HERE',
+
+修改後:
+GOOGLE_API_KEY: 'AIzaSyAbc123def456...', // 👈 您的 API Key
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 詳細教學請參考: SETUP.md
+🆘 遇到問題請參考: README.md
+
+如果您還沒有 API Key:
+👉 訪問: https://console.cloud.google.com/
+👉 啟用: Maps JavaScript API, Places API, Geocoding API
+👉 建立: API 金鑰
+
+===============================================
