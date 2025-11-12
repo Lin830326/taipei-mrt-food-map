@@ -121,7 +121,7 @@ taipei-mrt-food-map/
 
 ## 👨‍💻 作者
 
-您的名字 - [@your_handle](https://twitter.com/your_handle)
+您的名字 - [LAI JIUN-LIN]
 
 專案連結：[https://github.com/YOUR_USERNAME/taipei-mrt-food-map](https://github.com/YOUR_USERNAME/taipei-mrt-food-map)
 
@@ -140,5 +140,5 @@ taipei-mrt-food-map/
 ## 📞 聯絡方式
 
 如有問題或建議，歡迎透過以下方式聯絡：
-- 📧 Email: your.email@example.com
+- 📧 Email: jimlai19940326@gmail.com
 - 💬 GitHub Issues: [提交問題](https://github.com/YOUR_USERNAME/taipei-mrt-food-map/issues)
