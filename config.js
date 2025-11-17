@@ -44,6 +44,21 @@ const CONFIG = {
         'food': '食物店'
     },
     
+    // 業務狀態定義
+    BUSINESS_STATUS: {
+        'OPERATIONAL': '營業中',
+        'CLOSED_TEMPORARILY': '暫停營業',
+        'CLOSED_PERMANENTLY': '永久歇業'
+    },
+    
+    // 搜尋過濾選項
+    SEARCH_FILTERS: {
+        excludeClosedPermanently: true,   // 排除永久歇業的店家
+        excludeTemporarilyClosed: false,  // 不排除暫時關閉的店家
+        minRating: 0,                     // 最低評分要求 (0 = 不限制)
+        minReviews: 0                     // 最低評論數要求 (0 = 不限制)
+    },
+    
     // 價格等級對應
     PRICE_LEVELS: {
         0: '免費',

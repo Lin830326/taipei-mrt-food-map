@@ -365,12 +365,48 @@ async function searchNearbyFood(stationName, options = {}) {
                 
                 // 過濾和排序結果
                 let filtered = results.filter(place => {
+                    // 1. 排除永久歇業的店家
+                    if (CONFIG.SEARCH_FILTERS.excludeClosedPermanently) {
+                        if (place.business_status === 'CLOSED_PERMANENTLY') {
+                            console.log(`🚫 排除永久歇業: ${place.name}`);
+                            return false;
+                        }
+                    }
+                    
+                    // 2. 排除暫時關閉的店家（可選）
+                    if (CONFIG.SEARCH_FILTERS.excludeTemporarilyClosed) {
+                        if (place.business_status === 'CLOSED_TEMPORARILY') {
+                            console.log(`⏸️ 排除暫時關閉: ${place.name}`);
+                            return false;
+                        }
+                    }
+                    
+                    // 3. 價格過濾
                     if (options.maxPrice && place.price_level > options.maxPrice) {
                         return false;
                     }
+                    
+                    // 4. 最低評分過濾
+                    if (CONFIG.SEARCH_FILTERS.minRating > 0) {
+                        if (!place.rating || place.rating < CONFIG.SEARCH_FILTERS.minRating) {
+                            return false;
+                        }
+                    }
+                    
+                    // 5. 最低評論數過濾
+                    if (CONFIG.SEARCH_FILTERS.minReviews > 0) {
+                        if (!place.user_ratings_total || place.user_ratings_total < CONFIG.SEARCH_FILTERS.minReviews) {
+                            return false;
+                        }
+                    }
+                    
                     return true;
                 });
                 
+                const closedCount = results.length - filtered.length;
+                if (closedCount > 0) {
+                    console.log(`🔽 篩選掉 ${closedCount} 個不符合條件的結果（包含歇業店家）`);
+                }
                 console.log(`🔽 篩選後剩餘 ${filtered.length} 個結果`);
                 
                 // 計算智能評分
