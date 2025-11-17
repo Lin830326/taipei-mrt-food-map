@@ -22,6 +22,20 @@
     --radius-md: 12px;
     --radius-lg: 16px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+    --transition-slow: all 0.5s ease;
+}
+
+/* 無障礙性 - 尊重使用者的動畫偏好 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 * {
@@ -967,5 +981,546 @@ body::after {
     .features {
         flex-direction: column;
         gap: 20px;
+    }
+}
+
+/* ==========================================
+   視覺改善 - 載入動畫與骨架屏
+   ========================================== */
+
+/* 骨架屏基礎樣式 */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 0%,
+        #f8f8f8 20%,
+        #f0f0f0 40%,
+        #f0f0f0 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* 美食卡片骨架屏 */
+.food-card.skeleton {
+    pointer-events: none;
+    cursor: default;
+}
+
+.food-card.skeleton .food-card-image {
+    background: linear-gradient(
+        90deg,
+        #e0e0e0 0%,
+        #f0f0f0 20%,
+        #e0e0e0 40%,
+        #e0e0e0 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s ease-in-out infinite;
+}
+
+.food-card.skeleton .food-card-title,
+.food-card.skeleton .meta-item,
+.food-card.skeleton .food-tag {
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 0%,
+        #f8f8f8 20%,
+        #f0f0f0 40%,
+        #f0f0f0 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s ease-in-out infinite;
+    color: transparent;
+    border-radius: 4px;
+}
+
+/* 載入 Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 102, 204, 0.1);
+    border-top: 4px solid #0066CC;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-spinner.small {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+.loading-spinner.large {
+    width: 60px;
+    height: 60px;
+    border-width: 6px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 脈衝載入效果 */
+.loading-pulse {
+    display: inline-block;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 波紋載入效果 */
+.loading-ripple {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.loading-ripple div {
+    position: absolute;
+    border: 4px solid #0066CC;
+    opacity: 1;
+    border-radius: 50%;
+    animation: ripple 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.loading-ripple div:nth-child(2) {
+    animation-delay: -0.5s;
+}
+
+@keyframes ripple {
+    0% {
+        top: 36px;
+        left: 36px;
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    100% {
+        top: 0px;
+        left: 0px;
+        width: 72px;
+        height: 72px;
+        opacity: 0;
+    }
+}
+
+/* 載入容器樣式 */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 20px;
+}
+
+.loading-container .loading-text {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ==========================================
+   視覺改善 - 平滑過渡效果
+   ========================================== */
+
+/* 淡入效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 從下往上滑入 */
+.slide-up {
+    animation: slideUpAnimation 0.5s ease-out;
+}
+
+@keyframes slideUpAnimation {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 從左往右滑入 */
+.slide-in-left {
+    animation: slideInLeft 0.5s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 縮放進入 */
+.scale-in {
+    animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 卡片進入動畫 - 交錯效果 */
+.food-card {
+    animation: cardEnter 0.5s ease-out backwards;
+}
+
+.food-card:nth-child(1) { animation-delay: 0.05s; }
+.food-card:nth-child(2) { animation-delay: 0.1s; }
+.food-card:nth-child(3) { animation-delay: 0.15s; }
+.food-card:nth-child(4) { animation-delay: 0.2s; }
+.food-card:nth-child(5) { animation-delay: 0.25s; }
+.food-card:nth-child(6) { animation-delay: 0.3s; }
+.food-card:nth-child(7) { animation-delay: 0.35s; }
+.food-card:nth-child(8) { animation-delay: 0.4s; }
+.food-card:nth-child(9) { animation-delay: 0.45s; }
+.food-card:nth-child(10) { animation-delay: 0.5s; }
+.food-card:nth-child(11) { animation-delay: 0.55s; }
+.food-card:nth-child(12) { animation-delay: 0.6s; }
+
+@keyframes cardEnter {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 平滑滾動 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 按鈕按下效果 */
+button,
+.btn,
+.station-item,
+.filter-chip,
+.popular-station {
+    transition: var(--transition);
+    will-change: transform;
+}
+
+button:active,
+.btn:active,
+.station-item:active,
+.filter-chip:active,
+.popular-station:active {
+    transform: scale(0.95);
+}
+
+/* ==========================================
+   視覺改善 - 無障礙性改善
+   ========================================== */
+
+/* 鍵盤焦點樣式 */
+*:focus {
+    outline: 2px solid #0066CC;
+    outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+*:focus-visible {
+    outline: 3px solid #0066CC;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* 高對比度模式支援 */
+@media (prefers-contrast: high) {
+    :root {
+        --color-text: #000000;
+        --color-bg: #ffffff;
+        --color-border: #000000;
+    }
+    
+    .food-card,
+    .control-input,
+    .station-item {
+        border: 2px solid #000000;
+    }
+}
+
+/* 跳過導航連結 (無障礙) */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #0066CC;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 10000;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* 螢幕閱讀器專用文字 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* 可見焦點指示器 */
+.station-item:focus,
+.filter-chip:focus,
+.popular-station:focus {
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3);
+    z-index: 1;
+}
+
+/* ARIA 即時區域樣式 */
+[aria-live="polite"],
+[aria-live="assertive"] {
+    position: relative;
+}
+
+/* ==========================================
+   視覺改善 - 互動回饋
+   ========================================== */
+
+/* Hover 發光效果 */
+.food-card:hover {
+    box-shadow: 
+        0 8px 16px rgba(0,0,0,0.15),
+        0 0 20px rgba(0, 102, 204, 0.1);
+    transition: var(--transition);
+}
+
+/* 按鈕波紋效果 */
+.btn,
+.search-btn,
+.banner-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after,
+.search-btn::after,
+.banner-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::after,
+.search-btn:active::after,
+.banner-btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* 成功提示動畫 */
+.success-checkmark {
+    display: inline-block;
+    animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes successPop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 錯誤震動效果 */
+.shake {
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+/* 工具提示淡入 */
+.tooltip {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.tooltip.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ==========================================
+   視覺改善 - 載入狀態優化
+   ========================================== */
+
+/* 按鈕載入狀態 */
+.btn.loading,
+.search-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn.loading::before,
+.search-btn.loading::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* 地圖載入覆蓋層 */
+.map-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 內容載入狀態 */
+.content-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.content-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid rgba(0, 102, 204, 0.1);
+    border-top-color: #0066CC;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* 進度條 */
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 102, 204, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0066CC 0%, #009100 100%);
+    transition: width 0.3s ease;
+    animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+/* ==========================================
+   視覺改善 - 響應式動畫調整
+   ========================================== */
+
+@media (max-width: 768px) {
+    /* 移動裝置減少動畫複雜度 */
+    .food-card {
+        animation-duration: 0.3s;
+    }
+    
+    .loading-ripple {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .food-card:hover {
+        transform: translateY(-4px);
+    }
+}
+
+/* 列印模式優化 */
+@media print {
+    .loading-spinner,
+    .skeleton,
+    .loading-container {
+        display: none !important;
+    }
+    
+    .food-card {
+        animation: none !important;
+        break-inside: avoid;
     }
 }
