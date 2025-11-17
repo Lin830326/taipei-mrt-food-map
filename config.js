@@ -74,6 +74,27 @@ const CONFIG = {
         distance: 0.3,    // 距離權重
         reviews: 0.2,     // 評論數權重
         price: 0.1        // 價格權重
+    },
+    
+    // 地理定位設定
+    GEOLOCATION_OPTIONS: {
+        enableHighAccuracy: true,  // 使用高精度定位
+        timeout: 10000,            // 10秒超時
+        maximumAge: 0              // 不使用快取位置
+    },
+    
+    // 導航設定
+    NAVIGATION_SETTINGS: {
+        travelMode: 'WALKING',     // 預設步行模式 (WALKING, DRIVING, BICYCLING, TRANSIT)
+        unitSystem: 'METRIC',      // 公制單位
+        avoidHighways: false,      // 避開高速公路
+        avoidTolls: true          // 避開收費道路
+    },
+    
+    // 功能開關
+    FEATURE_FLAGS: {
+        enableNavigation: false,   // 導航功能（需要 Directions API，暫時關閉）
+        enableGoogleMaps: true     // Google Maps 跳轉（免費，開啟）
     }
 };
 

@@ -703,13 +703,20 @@ body::after {
     overflow: hidden;
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
-    cursor: pointer;
     border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
 }
 
 .food-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
+}
+
+/* 可點擊的卡片區域（不包含按鈕） */
+.food-card-clickable {
+    cursor: pointer;
+    flex: 1;
 }
 
 .food-card-image {
@@ -1523,4 +1530,236 @@ button:active,
         animation: none !important;
         break-inside: avoid;
     }
+}
+
+/* ==========================================
+   導航功能樣式
+   ========================================== */
+
+/* 美食卡片導航按鈕區域 */
+.food-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-navigate,
+.btn-google-maps {
+    flex: 1;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+}
+
+.btn-navigate {
+    background: linear-gradient(135deg, #0066CC 0%, #0052a3 100%);
+    color: white;
+}
+
+.btn-navigate:hover {
+    background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+/* 禁用狀態 */
+.btn-navigate.btn-disabled {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-navigate.btn-disabled:hover {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-google-maps {
+    background: linear-gradient(135deg, #34A853 0%, #2d8e47 100%);
+    color: white;
+}
+
+.btn-google-maps:hover {
+    background: linear-gradient(135deg, #2d8e47 0%, #26753c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+}
+
+.btn-navigate:active,
+.btn-google-maps:active {
+    transform: scale(0.95);
+}
+
+/* 路線資訊面板 */
+.route-info-panel {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    width: 320px;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    opacity: 0;
+    transform: translateX(350px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.route-info-panel.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.route-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #0066CC 0%, #009100 100%);
+    color: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.route-info-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close-route-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.close-route-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.route-info-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.route-stat {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+}
+
+.route-stat i {
+    font-size: 1.5rem;
+    color: #0066CC;
+    width: 30px;
+    text-align: center;
+}
+
+.route-stat div {
+    display: flex;
+    flex-direction: column;
+}
+
+.route-label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 2px;
+}
+
+.route-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.route-actions {
+    padding: 15px 20px 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-route-action {
+    flex: 1;
+    padding: 10px 16px;
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: 20px;
+    color: var(--color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-route-action:hover {
+    background: var(--color-danger);
+    color: white;
+    border-color: var(--color-danger);
+    transform: translateY(-2px);
+}
+
+/* 地圖位置標記樣式優化 */
+.gm-style .gm-style-iw-c {
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.gm-style .gm-style-iw-d {
+    overflow: auto !important;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .route-info-panel {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+    }
+    
+    .food-card-actions {
+        flex-direction: column;
+    }
+    
+    .btn-navigate,
+    .btn-google-maps {
+        width: 100%;
+    }
+}
+
+/* 無障礙性 - 按鈕焦點 */
+.btn-navigate:focus,
+.btn-google-maps:focus,
+.btn-route-action:focus {
+    outline: 3px solid rgba(0, 102, 204, 0.5);
+    outline-offset: 2px;
 }

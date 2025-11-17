@@ -4,6 +4,9 @@ let currentStation = null;
 let markers = [];
 let selectedFoodType = '';
 let searchResults = [];
+let directionsService = null;
+let directionsRenderer = null;
+let userLocation = null;
 
 // 初始化函數
 function initApp() {
@@ -511,37 +514,58 @@ function createFoodCard(place) {
     const openStatus = isOpen === undefined ? '' : 
         `<span class="food-tag ${isOpen ? 'open' : 'closed'}">${isOpen ? '營業中' : '已打烊'}</span>`;
     
+    // 將 place 物件序列化並存儲，避免 JSON.stringify 在 HTML 中的問題
+    const placeId = place.place_id;
+    
     return `
-        <div class="food-card" onclick="showPlaceDetails('${place.place_id}')">
-            <img src="${photoUrl}" alt="${place.name}" class="food-card-image" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
-            <div class="food-card-content">
-                <div class="food-card-header">
-                    <div>
-                        <h3 class="food-card-title">${place.name}</h3>
+        <div class="food-card" data-place-id="${placeId}">
+            <div class="food-card-clickable" onclick="showPlaceDetails('${placeId}')">
+                <img src="${photoUrl}" alt="${place.name}" class="food-card-image" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
+                <div class="food-card-content">
+                    <div class="food-card-header">
+                        <div>
+                            <h3 class="food-card-title">${place.name}</h3>
+                        </div>
+                        <div class="smart-score">
+                            <i class="fas fa-star"></i>
+                            <span>${place.smartScore || 0}</span>
+                        </div>
                     </div>
-                    <div class="smart-score">
-                        <i class="fas fa-star"></i>
-                        <span>${place.smartScore || 0}</span>
+                    <div class="food-card-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-star"></i>
+                            <span class="rating-stars">${stars}</span>
+                            <span>${rating.toFixed(1)} (${place.user_ratings_total || 0})</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${place.vicinity || '地址未提供'}</span>
+                        </div>
+                    </div>
+                    <div class="food-card-tags">
+                        <span class="food-tag price">${priceLevel}</span>
+                        ${openStatus}
+                        ${place.types ? place.types.slice(0, 2).map(t => 
+                            `<span class="food-tag">${CONFIG.FOOD_TYPES[t] || t}</span>`
+                        ).join('') : ''}
                     </div>
                 </div>
-                <div class="food-card-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-star"></i>
-                        <span class="rating-stars">${stars}</span>
-                        <span>${rating.toFixed(1)} (${place.user_ratings_total || 0})</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>${place.vicinity || '地址未提供'}</span>
-                    </div>
-                </div>
-                <div class="food-card-tags">
-                    <span class="food-tag price">${priceLevel}</span>
-                    ${openStatus}
-                    ${place.types ? place.types.slice(0, 2).map(t => 
-                        `<span class="food-tag">${CONFIG.FOOD_TYPES[t] || t}</span>`
-                    ).join('') : ''}
-                </div>
+            </div>
+            <div class="food-card-actions">
+                ${CONFIG.FEATURE_FLAGS.enableNavigation ? `
+                    <button class="btn-navigate" onclick="event.stopPropagation(); handleNavigate('${placeId}')" title="顯示路線">
+                        <i class="fas fa-directions"></i> 導航
+                    </button>
+                ` : `
+                    <button class="btn-navigate btn-disabled" onclick="event.stopPropagation(); showNotification('🚧 導航功能即將開放', 'info')" title="功能準備中">
+                        <i class="fas fa-directions"></i> 導航 (即將開放)
+                    </button>
+                `}
+                ${CONFIG.FEATURE_FLAGS.enableGoogleMaps ? `
+                    <button class="btn-google-maps" onclick="event.stopPropagation(); handleGoogleMaps('${placeId}')" title="在 Google Maps 開啟">
+                        <i class="fab fa-google"></i> Google Maps
+                    </button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -765,6 +789,18 @@ window.initMap = function() {
         
         console.log('✅ Google Maps 初始化成功');
         
+        // 初始化導航服務
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: false,
+            polylineOptions: {
+                strokeColor: '#0066CC',
+                strokeWeight: 5,
+                strokeOpacity: 0.8
+            }
+        });
+        
         // 隱藏 API 提示橫幅
         const banner = document.getElementById('apiBanner');
         const message = document.getElementById('bannerMessage');
@@ -785,4 +821,272 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 } else {
     initApp();
+}
+
+// ==========================================
+// 導航功能
+// ==========================================
+
+/**
+ * 獲取使用者當前位置
+ * @returns {Promise<{lat: number, lng: number}>}
+ */
+function getUserLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('您的瀏覽器不支援定位功能'));
+            return;
+        }
+        
+        console.log('📍 正在獲取使用者位置...');
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const location = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                userLocation = location;
+                console.log('✅ 獲取位置成功:', location);
+                resolve(location);
+            },
+            (error) => {
+                console.error('❌ 獲取位置失敗:', error);
+                let errorMessage = '無法獲取您的位置';
+                
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = '請允許瀏覽器存取您的位置';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = '位置資訊暫時無法使用';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = '獲取位置超時，請稍後再試';
+                        break;
+                }
+                
+                reject(new Error(errorMessage));
+            },
+            CONFIG.GEOLOCATION_OPTIONS
+        );
+    });
+}
+
+/**
+ * 顯示從使用者位置到餐廳的路線
+ * @param {Object} origin - 起點座標 {lat, lng}
+ * @param {Object} destination - 終點座標 {lat, lng}
+ * @param {string} placeName - 餐廳名稱
+ */
+async function showDirections(origin, destination, placeName) {
+    if (!directionsService || !directionsRenderer) {
+        showNotification('地圖尚未初始化', 'error');
+        return;
+    }
+    
+    console.log('🗺️ 計算路線:', { origin, destination });
+    
+    const request = {
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode[CONFIG.NAVIGATION_SETTINGS.travelMode],
+        unitSystem: google.maps.UnitSystem.METRIC
+    };
+    
+    try {
+        directionsService.route(request, (result, status) => {
+            if (status === 'OK') {
+                // 清除舊的路線
+                directionsRenderer.setDirections(result);
+                
+                // 獲取路線資訊
+                const route = result.routes[0];
+                const leg = route.legs[0];
+                
+                console.log('✅ 路線計算成功');
+                console.log('距離:', leg.distance.text);
+                console.log('時間:', leg.duration.text);
+                
+                // 顯示路線資訊
+                showRouteInfo({
+                    distance: leg.distance.text,
+                    duration: leg.duration.text,
+                    placeName: placeName,
+                    steps: leg.steps
+                });
+                
+                showNotification(`已為您規劃前往 ${placeName} 的路線`, 'success');
+            } else {
+                console.error('❌ 路線計算失敗:', status);
+                showNotification('路線規劃失敗: ' + status, 'error');
+            }
+        });
+    } catch (error) {
+        console.error('❌ 導航錯誤:', error);
+        showNotification('導航功能發生錯誤', 'error');
+    }
+}
+
+/**
+ * 顯示路線資訊面板
+ * @param {Object} routeInfo - 路線資訊
+ */
+function showRouteInfo(routeInfo) {
+    // 檢查是否已有路線資訊面板
+    let panel = document.getElementById('routeInfoPanel');
+    
+    if (!panel) {
+        // 創建路線資訊面板
+        panel = document.createElement('div');
+        panel.id = 'routeInfoPanel';
+        panel.className = 'route-info-panel';
+        document.querySelector('.map-section').appendChild(panel);
+    }
+    
+    panel.innerHTML = `
+        <div class="route-info-header">
+            <h3><i class="fas fa-route"></i> 前往 ${routeInfo.placeName}</h3>
+            <button onclick="closeRouteInfo()" class="close-route-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="route-info-body">
+            <div class="route-stat">
+                <i class="fas fa-walking"></i>
+                <div>
+                    <span class="route-label">步行距離</span>
+                    <span class="route-value">${routeInfo.distance}</span>
+                </div>
+            </div>
+            <div class="route-stat">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <span class="route-label">預估時間</span>
+                    <span class="route-value">${routeInfo.duration}</span>
+                </div>
+            </div>
+        </div>
+        <div class="route-actions">
+            <button onclick="clearRoute()" class="btn-route-action">
+                <i class="fas fa-eraser"></i> 清除路線
+            </button>
+        </div>
+    `;
+    
+    panel.classList.add('show');
+}
+
+/**
+ * 關閉路線資訊面板
+ */
+function closeRouteInfo() {
+    const panel = document.getElementById('routeInfoPanel');
+    if (panel) {
+        panel.classList.remove('show');
+        setTimeout(() => panel.remove(), 300);
+    }
+}
+
+/**
+ * 清除地圖上的路線
+ */
+function clearRoute() {
+    if (directionsRenderer) {
+        directionsRenderer.setDirections({ routes: [] });
+    }
+    closeRouteInfo();
+    showNotification('已清除路線', 'info');
+}
+
+/**
+ * 導航到餐廳（主要功能）- 暫時禁用
+ * @param {Object} place - 餐廳資訊
+ */
+async function navigateToRestaurant(place) {
+    console.log('⚠️ 導航功能暫時關閉');
+    
+    // 暫時禁用，等待 API 安全設定完成
+    showNotification('� 導航功能即將開放，請使用「Google Maps」按鈕', 'warning');
+    
+    /* 
+    // 功能已暫時禁用，待 API 安全設定完成後啟用
+    console.log('�🚀 開始導航到:', place.name);
+    
+    try {
+        // 獲取使用者位置
+        const origin = await getUserLocation();
+        
+        // 獲取餐廳位置
+        const destination = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng()
+        };
+        
+        // 顯示路線
+        await showDirections(origin, destination, place.name);
+        
+        // 在地圖上標記使用者位置
+        if (map) {
+            new google.maps.Marker({
+                position: origin,
+                map: map,
+                title: '您的位置',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                }
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ 導航失敗:', error);
+        showNotification(error.message, 'error');
+    }
+    */
+}
+
+/**
+ * 在 Google Maps App 中開啟
+ * @param {Object} place - 餐廳資訊
+ */
+function openInGoogleMaps(place) {
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    const placeName = encodeURIComponent(place.name);
+    
+    // Google Maps URL
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${place.place_id}&travelmode=walking`;
+    
+    console.log('🗺️ 在 Google Maps 中開啟:', placeName);
+    window.open(url, '_blank');
+}
+
+/**
+ * 處理導航按鈕點擊（通過 place_id 查找）
+ * @param {string} placeId - 餐廳的 place_id
+ */
+function handleNavigate(placeId) {
+    console.log('🔍 查找餐廳:', placeId);
+    const place = searchResults.find(p => p.place_id === placeId);
+    
+    if (place) {
+        navigateToRestaurant(place);
+    } else {
+        showNotification('找不到餐廳資訊', 'error');
+    }
+}
+
+/**
+ * 處理 Google Maps 按鈕點擊（通過 place_id 查找）
+ * @param {string} placeId - 餐廳的 place_id
+ */
+function handleGoogleMaps(placeId) {
+    console.log('🔍 查找餐廳:', placeId);
+    const place = searchResults.find(p => p.place_id === placeId);
+    
+    if (place) {
+        openInGoogleMaps(place);
+    } else {
+        showNotification('找不到餐廳資訊', 'error');
+    }
 }
