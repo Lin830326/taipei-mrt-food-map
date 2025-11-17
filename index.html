@@ -93,7 +93,7 @@
         <!-- 側邊欄 - 捷運站列表 -->
         <aside class="sidebar">
             <!-- 紅線 -->
-            <div class="line-section">
+            <div class="line-section" data-line="red">
                 <div class="line-header line-red" onclick="toggleLine('red')">
                     <i class="fas fa-train"></i>
                     <span>紅線（淡水信義）</span>
@@ -375,3 +375,25 @@
     <script src="app.js"></script>
 </body>
 </html>
+
+<style>
+/* 使用更通用的方式 */
+.line-section[data-line="red"] .station-item:hover {
+    background: #FF7575;
+}
+/* 新增骨架屏動畫 */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+</style>
+
+
+
+
