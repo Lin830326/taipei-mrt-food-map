@@ -104,7 +104,7 @@ const CONFIG = {
     
     // 功能開關
     FEATURE_FLAGS: {
-        enableNavigation: false,   // 導航功能（需要 Directions API，暫時關閉）
+        enableNavigation: true,    // ✅ 導航功能（開啟）
         enableGoogleMaps: true     // Google Maps 跳轉（免費，開啟）
     }
 };

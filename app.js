@@ -537,6 +537,22 @@ function createFoodCard(place) {
     // 將 place 物件序列化並存儲，避免 JSON.stringify 在 HTML 中的問題
     const placeId = place.place_id;
     
+    // 動作按鈕
+    const actionsHtml = `
+        <div class="food-actions">
+            ${CONFIG.FEATURE_FLAGS.enableNavigation 
+                ? `<button class="action-btn btn-navigate" onclick="handleNavigate('${place.place_id}')" title="開始導航">
+                       <i class="fas fa-directions"></i> 導航
+                   </button>`
+                : ''}
+            ${CONFIG.FEATURE_FLAGS.enableGoogleMaps 
+                ? `<button class="action-btn btn-maps" onclick="handleGoogleMaps('${place.place_id}')" title="在 Google Maps 中開啟">
+                       <i class="fab fa-google"></i> Google Maps
+                   </button>`
+                : ''}
+        </div>
+    `;
+    
     return `
         <div class="food-card" data-place-id="${placeId}">
             <div class="food-card-clickable" onclick="showPlaceDetails('${placeId}')">
@@ -573,22 +589,7 @@ function createFoodCard(place) {
                     </div>
                 </div>
             </div>
-            <div class="food-card-actions">
-                ${CONFIG.FEATURE_FLAGS.enableNavigation ? `
-                    <button class="btn-navigate" onclick="event.stopPropagation(); handleNavigate('${placeId}')" title="顯示路線">
-                        <i class="fas fa-directions"></i> 導航
-                    </button>
-                ` : `
-                    <button class="btn-navigate btn-disabled" onclick="event.stopPropagation(); showNotification('🚧 導航功能即將開放', 'info')" title="功能準備中">
-                        <i class="fas fa-directions"></i> 導航 (即將開放)
-                    </button>
-                `}
-                ${CONFIG.FEATURE_FLAGS.enableGoogleMaps ? `
-                    <button class="btn-google-maps" onclick="event.stopPropagation(); handleGoogleMaps('${placeId}')" title="在 Google Maps 開啟">
-                        <i class="fab fa-google"></i> Google Maps
-                    </button>
-                ` : ''}
-            </div>
+            ${actionsHtml}
         </div>
     `;
 }
@@ -1022,49 +1023,40 @@ function clearRoute() {
 }
 
 /**
- * 導航到餐廳（主要功能）- 暫時禁用
+ * 導航到餐廳（主要功能）
  * @param {Object} place - 餐廳資訊
  */
 async function navigateToRestaurant(place) {
-    console.log('⚠️ 導航功能暫時關閉');
-    
-    // 暫時禁用，等待 API 安全設定完成
-    showNotification('� 導航功能即將開放，請使用「Google Maps」按鈕', 'warning');
-    
-    /* 
-    // 功能已暫時禁用，待 API 安全設定完成後啟用
-    console.log('�🚀 開始導航到:', place.name);
-    
     try {
-        // 獲取使用者位置
-        const origin = await getUserLocation();
-        
-        // 獲取餐廳位置
-        const destination = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-        };
-        
-        // 顯示路線
-        await showDirections(origin, destination, place.name);
-        
-        // 在地圖上標記使用者位置
-        if (map) {
-            new google.maps.Marker({
-                position: origin,
-                map: map,
-                title: '您的位置',
-                icon: {
-                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-                }
-            });
+        // 檢查功能是否啟用
+        if (!CONFIG.FEATURE_FLAGS.enableNavigation) {
+            showNotification('導航功能未啟用，請使用 Google Maps 跳轉', 'warning');
+            return;
         }
         
+        showNotification(`正在規劃前往 ${place.name} 的路線...`, 'info');
+        
+        // 獲取使用者位置
+        const userPos = await getUserLocation();
+        
+        if (!userPos) {
+            showNotification('無法取得您的位置，請開啟定位權限', 'error');
+            return;
+        }
+        
+        // 顯示路線
+        await showDirections(
+            userPos,
+            { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
+            place.name
+        );
+        
+        showNotification(`已規劃前往 ${place.name} 的路線`, 'success');
+        
     } catch (error) {
-        console.error('❌ 導航失敗:', error);
-        showNotification(error.message, 'error');
+        console.error('❌ 導航錯誤:', error);
+        showNotification('導航失敗：' + error.message, 'error');
     }
-    */
 }
 
 /**
