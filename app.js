@@ -537,22 +537,6 @@ function createFoodCard(place) {
     // 將 place 物件序列化並存儲，避免 JSON.stringify 在 HTML 中的問題
     const placeId = place.place_id;
     
-    // 動作按鈕
-    const actionsHtml = `
-        <div class="food-actions">
-            ${CONFIG.FEATURE_FLAGS.enableNavigation 
-                ? `<button class="action-btn btn-navigate" onclick="handleNavigate('${place.place_id}')" title="開始導航">
-                       <i class="fas fa-directions"></i> 導航
-                   </button>`
-                : ''}
-            ${CONFIG.FEATURE_FLAGS.enableGoogleMaps 
-                ? `<button class="action-btn btn-maps" onclick="handleGoogleMaps('${place.place_id}')" title="在 Google Maps 中開啟">
-                       <i class="fab fa-google"></i> Google Maps
-                   </button>`
-                : ''}
-        </div>
-    `;
-    
     return `
         <div class="food-card" data-place-id="${placeId}">
             <div class="food-card-clickable" onclick="showPlaceDetails('${placeId}')">
@@ -589,7 +573,18 @@ function createFoodCard(place) {
                     </div>
                 </div>
             </div>
-            ${actionsHtml}
+            <div class="food-card-actions">
+                ${CONFIG.FEATURE_FLAGS.enableNavigation ? `
+                    <button class="btn-navigate" onclick="event.stopPropagation(); handleNavigate('${placeId}')" title="顯示路線">
+                        <i class="fas fa-directions"></i> 導航
+                    </button>
+                ` : ''}
+                ${CONFIG.FEATURE_FLAGS.enableGoogleMaps ? `
+                    <button class="btn-google-maps" onclick="event.stopPropagation(); handleGoogleMaps('${placeId}')" title="在 Google Maps 開啟">
+                        <i class="fab fa-google"></i> Google Maps
+                    </button>
+                ` : ''}
+            </div>
         </div>
     `;
 }
