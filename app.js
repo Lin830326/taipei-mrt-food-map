@@ -8,6 +8,26 @@ let directionsService = null;
 let directionsRenderer = null;
 let userLocation = null;
 
+// 通用的 Place Types（從 CONFIG 讀取或使用預設值）
+const GENERIC_PLACE_TYPES = new Set(
+    (CONFIG && CONFIG.GENERIC_PLACE_TYPES && Array.isArray(CONFIG.GENERIC_PLACE_TYPES))
+        ? CONFIG.GENERIC_PLACE_TYPES
+        : ['point_of_interest', 'establishment', 'food', 'restaurant', 'store', 'shopping_mall', 'health']
+);
+
+function formatPlaceTypeLabel(type) {
+    if (!type) return '';
+    if (CONFIG && CONFIG.FOOD_TYPES && CONFIG.FOOD_TYPES[type]) {
+        return CONFIG.FOOD_TYPES[type];
+    }
+    return type.replace(/_/g, ' ');
+}
+
+function getPriceFilter(level) {
+    if (!CONFIG || !CONFIG.PRICE_FILTERS) return null;
+    return CONFIG.PRICE_FILTERS[level] || null;
+}
+
 // 初始化函數
 function initApp() {
     console.log('🚀 應用初始化開始...');
@@ -545,9 +565,11 @@ function createFoodCard(place) {
                     <div class="food-card-tags">
                         <span class="food-tag price">${priceLevel}</span>
                         ${openStatus}
-                        ${place.types ? place.types.slice(0, 2).map(t => 
-                            `<span class="food-tag">${CONFIG.FOOD_TYPES[t] || t}</span>`
-                        ).join('') : ''}
+                        ${(place.types || [])
+                            .filter(type => !GENERIC_PLACE_TYPES.has(type))
+                            .slice(0, 2)
+                            .map(type => `<span class="food-tag">${formatPlaceTypeLabel(type)}</span>`)
+                            .join('')}
                     </div>
                 </div>
             </div>

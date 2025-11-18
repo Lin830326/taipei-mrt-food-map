@@ -44,6 +44,17 @@ const CONFIG = {
         'food': '食物店'
     },
     
+    // 通用的 Place Types（需要過濾掉，因為沒有意義）
+    GENERIC_PLACE_TYPES: [
+        'point_of_interest',
+        'establishment',
+        'food',
+        'restaurant',
+        'store',
+        'shopping_mall',
+        'health'
+    ],
+    
     // 業務狀態定義
     BUSINESS_STATUS: {
         'OPERATIONAL': '營業中',
