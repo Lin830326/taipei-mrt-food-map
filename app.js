@@ -111,16 +111,32 @@ function initEventListeners() {
     }
     
     // 價格範圍改變
-    const priceRange = document.getElementById('priceRange');
-    const priceDisplay = document.getElementById('priceDisplay');
-    if (priceRange && priceDisplay) {
-        priceRange.addEventListener('input', (e) => {
-            const value = parseInt(e.target.value);
-            const labels = ['經濟實惠', '平價~中等', '中等~高價', '高級餐飲'];
-            priceDisplay.textContent = labels[value - 1] || '平價~中等';
-            saveUserPreference('maxPrice', value);
-        });
-    }
+  const priceRange = document.getElementById('priceRange');
+const priceDisplay = document.getElementById('priceDisplay');
+
+function updatePriceDisplay(value) {
+    const labels = {
+        1: '只看平價 ($)',
+        2: '只看中價 ($$)',
+        3: '中價~中高價 ($$~$$$)',
+        4: '中高~高價 ($$$~$$$$)',
+    };
+    priceDisplay.textContent = labels[value] || '價格不限';
+}
+
+if (priceRange && priceDisplay) {
+    // 先用目前 slider 的值初始化一次文字
+    updatePriceDisplay(parseInt(priceRange.value || '3', 10));
+
+    priceRange.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value, 10);
+        updatePriceDisplay(value);
+
+        // 儲存的仍然是「第幾格」，後面再依這個值算出 min/max
+        saveUserPreference('maxPrice', value);
+    });
+}
+
     
     // 排序方式改變
     const sortSelect = document.getElementById('sortSelect');
@@ -238,19 +254,35 @@ async function performSmartSearch() {
         console.log('✅ Google Maps API 已載入');
         
         // 獲取搜尋參數
-        const radius = parseInt(document.getElementById('radiusSelect')?.value || '800');
-        const maxPrice = parseInt(document.getElementById('priceRange')?.value || '3');
-        const openNow = document.getElementById('openNowCheck')?.checked || false;
-        
-        console.log('🔧 解析後參數:', { radius, maxPrice, openNow, type: selectedFoodType });
-        
-        // 執行搜尋
-        const results = await searchNearbyFood(currentStation, {
-            radius,
-            maxPrice,
-            openNow,
-            type: selectedFoodType
-        });
+      // 獲取搜尋參數
+const radius = parseInt(document.getElementById('radiusSelect')?.value || '800');
+
+// 使用者在滑桿上選到第幾格（1~4）
+const priceValue = parseInt(document.getElementById('priceRange')?.value || '3', 10);
+
+// 將 1~4 映射成實際的價格區間
+const pricePresets = {
+    1: { minPrice: 1, maxPrice: 1 }, // 只看平價
+    2: { minPrice: 2, maxPrice: 2 }, // 只看中價
+    3: { minPrice: 2, maxPrice: 3 }, // 中價 + 中高價
+    4: { minPrice: 3, maxPrice: 4 }, // 中高~高價
+};
+
+// 如果出現例外值，就當作「價格不限」
+const priceFilter = pricePresets[priceValue] || { minPrice: 1, maxPrice: 4 };
+
+const openNow = document.getElementById('openNowCheck')?.checked || false;
+
+console.log('🔧 解析後參數:', { radius, priceFilter, openNow, type: selectedFoodType });
+
+// 執行搜尋
+const results = await searchNearbyFood(currentStation, {
+    radius,
+    priceFilter,  // 👈 改成傳一個 {minPrice, maxPrice}
+    openNow,
+    type: selectedFoodType
+});
+
         
         console.log('✅ 搜尋完成,結果數量:', results.length);
         
@@ -364,12 +396,33 @@ async function searchNearbyFood(stationName, options = {}) {
                 console.log(`✅ 找到 ${results.length} 個結果`);
                 
                 // 過濾和排序結果
-                let filtered = results.filter(place => {
-                    if (options.maxPrice && place.price_level > options.maxPrice) {
-                        return false;
-                    }
-                    return true;
-                });
+               // 過濾和排序結果（使用價格區間）
+               let filtered = results.filter(place => {
+    const rawPrice = place.price_level;
+
+    // 將 price_level 轉成 number，避免字串型別
+    const priceLevel = typeof rawPrice === 'number'
+        ? rawPrice
+        : (rawPrice != null ? parseInt(rawPrice, 10) : null);
+
+    // 支援新的 priceFilter，也順便相容舊的 maxPrice 用法
+    const priceFilter = options.priceFilter || (
+        options.maxPrice
+            ? { minPrice: 1, maxPrice: options.maxPrice }
+            : null
+    );
+
+    // 沒有設定價格篩選，或這家店沒價格資訊 → 不用價格把它排除
+    if (!priceFilter || priceLevel == null) {
+        return true;
+    }
+
+    if (priceLevel < priceFilter.minPrice) return false;
+    if (priceLevel > priceFilter.maxPrice) return false;
+
+    return true;
+});
+
                 
                 console.log(`🔽 篩選後剩餘 ${filtered.length} 個結果`);
                 
@@ -475,6 +528,14 @@ function createFoodCard(place) {
     const openStatus = isOpen === undefined ? '' : 
         `<span class="food-tag ${isOpen ? 'open' : 'closed'}">${isOpen ? '營業中' : '已打烊'}</span>`;
     
+    // 只挑出你定義過的 type 標籤 (避免未知 type 顯示英文)
+    const typeLabels = (place.types || [])
+        .map(t => CONFIG.FOOD_TYPES && CONFIG.FOOD_TYPES[t])
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(label => `<span class="food-tag">${label}</span>`)
+        .join('');
+    
     return `
         <div class="food-card" onclick="showPlaceDetails('${place.place_id}')">
             <img src="${photoUrl}" alt="${place.name}" class="food-card-image" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
@@ -502,9 +563,7 @@ function createFoodCard(place) {
                 <div class="food-card-tags">
                     <span class="food-tag price">${priceLevel}</span>
                     ${openStatus}
-                    ${place.types ? place.types.slice(0, 2).map(t => 
-                        `<span class="food-tag">${CONFIG.FOOD_TYPES[t] || t}</span>`
-                    ).join('') : ''}
+                    ${typeLabels}
                 </div>
             </div>
         </div>
