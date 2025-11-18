@@ -5,6 +5,7 @@ console.log('✅ favorites.js 檔案已載入（檔案頂端）');
 
 // 存在 localStorage 裡的 key 名稱
 const FAVORITES_STORAGE_KEY = 'mrt_food_favorites';
+const DEFAULT_FAVORITE_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image';
 
 // 記憶體中的我的最愛列表（Array）
 let favoritesList = [];
@@ -187,42 +188,69 @@ function buildPlaceDataFromCard(card, placeId) {
     const titleEl = card.querySelector('.food-card-title');
     const name = titleEl ? titleEl.textContent.trim() : '';
 
-    // 評分與評論數，例如 "4.3 (120)"
-    let rating = null;
-    let userRatingsTotal = null;
-    const ratingItem = card.querySelector('.food-card-meta .meta-item');
-    if (ratingItem) {
-        const spans = ratingItem.querySelectorAll('span');
-        // spans[2] 大概會是 "4.3 (120)" 這種
-        if (spans[2]) {
-            const text = spans[2].textContent.trim();
-            const m = text.match(/([\d.]+)\s*\((\d+)\)/);
-            if (m) {
-                rating = parseFloat(m[1]);
-                userRatingsTotal = parseInt(m[2]);
+    let sourcePlace = null;
+    if (typeof searchResults !== 'undefined' && Array.isArray(searchResults)) {
+        sourcePlace = searchResults.find((place) => place.place_id === placeId) || null;
+    }
+
+    const station = typeof currentStation === 'string' ? currentStation : null;
+
+    let rating = sourcePlace?.rating ?? null;
+    let userRatingsTotal = sourcePlace?.user_ratings_total ?? null;
+    let priceLevel = sourcePlace?.price_level ?? null;
+    let vicinity = sourcePlace?.vicinity || '';
+    let photoUrl = '';
+
+    if (rating === null || userRatingsTotal === null) {
+        const ratingItem = card.querySelector('.food-card-meta .meta-item');
+        if (ratingItem) {
+            const spans = ratingItem.querySelectorAll('span');
+            const ratingSpan = spans[spans.length - 1];
+            if (ratingSpan) {
+                const textValue = ratingSpan.textContent.trim();
+                const match = textValue.match(/([\d.]+)\s*\((\d+)\)/);
+                if (match) {
+                    rating = rating ?? parseFloat(match[1]);
+                    userRatingsTotal = userRatingsTotal ?? parseInt(match[2]);
+                }
             }
         }
     }
 
-    // 地址：第二個 meta-item 的最後一個 span
-    let vicinity = '';
-    const metaItems = card.querySelectorAll('.food-card-meta .meta-item');
-    if (metaItems[1]) {
-        const addrSpan = metaItems[1].querySelector('span:last-child');
-        if (addrSpan) {
-            vicinity = addrSpan.textContent.trim();
+    if (!vicinity) {
+        const metaItems = card.querySelectorAll('.food-card-meta .meta-item');
+        if (metaItems[1]) {
+            const addrSpan = metaItems[1].querySelector('span:last-child');
+            if (addrSpan) {
+                vicinity = addrSpan.textContent.trim();
+            }
         }
     }
 
-    // 圖片 URL
-    let photoUrl = '';
-    const img = card.querySelector('.food-card-image');
-    if (img && img.src) {
-        photoUrl = img.src;
+    if (sourcePlace?.photos?.length) {
+        try {
+            photoUrl = sourcePlace.photos[0].getUrl({ maxWidth: 400 });
+        } catch (error) {
+            console.warn('無法取得 Google Photos，改用 DOM 圖片', error);
+        }
     }
 
-    // 目前捷運站名稱（來自 app.js 全域變數）
-    const station = typeof currentStation === 'string' ? currentStation : null;
+    if (!photoUrl) {
+        const img = card.querySelector('.food-card-image');
+        if (img && img.src) {
+            photoUrl = img.src;
+        }
+    }
+
+    let location = null;
+    if (sourcePlace?.geometry?.location) {
+        const loc = sourcePlace.geometry.location;
+        const lat = typeof loc.lat === 'function' ? loc.lat() : loc.lat;
+        const lng = typeof loc.lng === 'function' ? loc.lng() : loc.lng;
+        if (typeof lat === 'number' && typeof lng === 'number') {
+            location = { lat, lng };
+        }
+    }
 
     return {
         placeId,
@@ -230,11 +258,54 @@ function buildPlaceDataFromCard(card, placeId) {
         station,
         rating,
         userRatingsTotal,
-        priceLevel: null, // 目前從 DOM 抓不到，就先保留欄位
+        priceLevel,
         vicinity,
         photoUrl,
+        location,
     };
 }
+
+function buildPlaceLikeFromFavorite(fav) {
+    if (!fav) return null;
+
+    const coords = fav.location;
+    const geometry = coords
+        ? {
+            location: {
+                lat: () => coords.lat,
+                lng: () => coords.lng,
+            },
+        }
+        : null;
+
+    return {
+        place_id: fav.placeId,
+        name: fav.name,
+        rating: typeof fav.rating === 'number' ? fav.rating : 0,
+        user_ratings_total: fav.userRatingsTotal ?? 0,
+        vicinity: fav.vicinity || '',
+        price_level: fav.priceLevel ?? null,
+        photos: [{
+            getUrl: () => fav.photoUrl || DEFAULT_FAVORITE_IMAGE,
+        }],
+        opening_hours: {},
+        smartScore: fav.smartScore || 0,
+        types: [],
+        geometry,
+    };
+}
+
+
+function getFavoritePlaceById(placeId) {
+    if (!placeId || !favoritesMap.has(placeId)) {
+        return null;
+    }
+    return buildPlaceLikeFromFavorite(favoritesMap.get(placeId));
+}
+
+window.getFavoritePlaceById = getFavoritePlaceById;
+
+
 
 /**
  * 按下愛心按鈕時，切換我的最愛狀態
@@ -294,25 +365,8 @@ function renderFavoritesList() {
 
     // 把每一筆 favorite 轉成「類似 Google Place 的物件」，丟給 createFoodCard 使用
     const cardsHtml = favoritesList.map((fav) => {
-        const placeLike = {
-            place_id: fav.placeId,
-            name: fav.name,
-            rating: fav.rating ?? 0,
-            user_ratings_total: fav.userRatingsTotal ?? 0,
-            vicinity: fav.vicinity || '',
-            price_level: fav.priceLevel || 1,
-            photos: [{
-                getUrl: () =>
-                    fav.photoUrl ||
-                    'https://via.placeholder.com/400x200?text=No+Image',
-            }],
-            opening_hours: {},   // 沒有營業資訊就給空物件
-            smartScore: 0,
-            types: [],
-        };
-
-        // createFoodCard 是 app.js 裡的函式（全域可用）
-        return createFoodCard(placeLike);
+        const placeLike = buildPlaceLikeFromFavorite(fav);
+        return placeLike ? createFoodCard(placeLike) : '';
     }).join('');
 
     foodGrid.innerHTML = cardsHtml;

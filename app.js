@@ -1050,16 +1050,49 @@ async function navigateToRestaurant(place) {
  * @param {Object} place - 餐廳資訊
  */
 function openInGoogleMaps(place) {
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
-    const placeName = encodeURIComponent(place.name);
-    
-    // Google Maps URL
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${place.place_id}&travelmode=walking`;
-    
+    if (!place || !place.geometry || !place.geometry.location) {
+        showNotification('找不到地點座標', 'error');
+        return;
+    }
+
+    const latSource = place.geometry.location.lat;
+    const lngSource = place.geometry.location.lng;
+    const lat = typeof latSource === 'function' ? latSource() : latSource;
+    const lng = typeof lngSource === 'function' ? lngSource() : lngSource;
+
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+        showNotification('地點座標無效', 'error');
+        return;
+    }
+
+    const placeName = encodeURIComponent(place.name || 'favorite');
+    const placeId = place.place_id || '';
+
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${placeId}&travelmode=walking`;
+
     console.log('🗺️ 在 Google Maps 中開啟:', placeName);
     window.open(url, '_blank');
 }
+
+
+function resolvePlaceById(placeId) {
+    if (!placeId) return null;
+
+    if (Array.isArray(searchResults)) {
+        const hit = searchResults.find(p => p.place_id === placeId);
+        if (hit) {
+            return hit;
+        }
+    }
+
+    if (typeof getFavoritePlaceById === 'function') {
+        return getFavoritePlaceById(placeId);
+    }
+
+    return null;
+}
+
+
 
 /**
  * 處理導航按鈕點擊（通過 place_id 查找）
@@ -1067,7 +1100,7 @@ function openInGoogleMaps(place) {
  */
 function handleNavigate(placeId) {
     console.log('🔍 查找餐廳:', placeId);
-    const place = searchResults.find(p => p.place_id === placeId);
+    const place = resolvePlaceById(placeId);
     
     if (place) {
         navigateToRestaurant(place);
@@ -1076,13 +1109,14 @@ function handleNavigate(placeId) {
     }
 }
 
+
 /**
  * 處理 Google Maps 按鈕點擊（通過 place_id 查找）
  * @param {string} placeId - 餐廳的 place_id
  */
 function handleGoogleMaps(placeId) {
     console.log('🔍 查找餐廳:', placeId);
-    const place = searchResults.find(p => p.place_id === placeId);
+    const place = resolvePlaceById(placeId);
     
     if (place) {
         openInGoogleMaps(place);
@@ -1090,3 +1124,4 @@ function handleGoogleMaps(placeId) {
         showNotification('找不到餐廳資訊', 'error');
     }
 }
+
