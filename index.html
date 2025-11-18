@@ -301,6 +301,12 @@
                     <button class="search-btn" id="searchBtn" onclick="performSmartSearch()">
                         <i class="fas fa-magic"></i> 智能搜尋
                     </button>
+                    
+                    <!-- ⭐ 新增：我的最愛按鈕 -->
+                    <button class="search-btn" id="favoritesListBtn">
+                        <i class="fas fa-heart"></i> 我的最愛
+                    </button>
+                
                 </div>
                 <div class="food-grid" id="foodGrid">
                     <div class="welcome-card">
@@ -373,6 +379,9 @@
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAIfX-FY50WPtoT5IxxpDllQIWv2-qEzc&libraries=places,geometry&loading=async&callback=initMap">
     </script>
     <script src="app.js"></script>
+    
+    <!-- 我的最愛功能（在 app.js 之後載入） -->
+    <script src="favorites.js"></script>
 </body>
 </html>
 
