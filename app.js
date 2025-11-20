@@ -139,9 +139,12 @@ function initEventListeners() {
     if (priceRange && priceDisplay) {
         priceRange.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
-            const labels = ['經濟實惠', '平價~中等', '中等~高價', '高級餐飲'];
-            priceDisplay.textContent = labels[value - 1] || '平價~中等';
+            const labels = ['實惠 $', '平價 $$', '中等 $$$', '高價 $$$$'];
+            priceDisplay.textContent = labels[value - 1] || '平價 $$';
             saveUserPreference('maxPrice', value);
+            if (currentStation) {
+                performSmartSearch();
+            }
         });
     }
     
@@ -404,9 +407,14 @@ async function searchNearbyFood(stationName, options = {}) {
                         }
                     }
                     
-                    // 3. 價格過濾
-                    if (options.maxPrice && place.price_level > options.maxPrice) {
-                        return false;
+                    // 3. 價格過濾 - 只顯示選定價格等級的餐廳
+                    if (options.maxPrice) {
+                        // 如果餐廳沒有price_level,預設為2(平價)
+                        const placePrice = place.price_level || 2;
+                        // 只保留完全符合選定價格等級的餐廳
+                        if (placePrice !== options.maxPrice) {
+                            return false;
+                        }
                     }
                     
                     // 4. 最低評分過濾
@@ -451,7 +459,8 @@ async function searchNearbyFood(stationName, options = {}) {
                     return 0;
                 });
                 
-                const finalResults = filtered.slice(0, CONFIG.API_SETTINGS.MAX_RESULTS);
+                // 限制為前10名
+                const finalResults = filtered.slice(0, 10);
                 console.log(`📋 最終返回 ${finalResults.length} 個結果`);
                 
                 resolve(finalResults);
