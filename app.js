@@ -31,23 +31,32 @@ function getPriceFilter(level) {
 // 初始化函數
 function initApp() {
     console.log('🚀 應用初始化開始...');
-    
+
+    // 顯示載入畫面
+    showLoadingScreen();
+
     // 檢查 API Key
     checkApiKey();
-    
+
     // 初始化事件監聽器
     initEventListeners();
-    
+
     // 載入使用者偏好設定
     loadUserPreferences();
-    
+
     // 初始化第一個捷運路線展開
     const firstLine = document.querySelector('.line-header');
     if (firstLine) {
         toggleLine(firstLine.dataset.line || 'red');
     }
-    
-    console.log('✅ 應用初始化完成');
+
+    // 如果沒有API Key，則在檢查完後隱藏載入畫面
+    if (!CONFIG.isApiKeyConfigured()) {
+        setTimeout(() => {
+            hideLoadingScreen();
+            console.log('✅ 應用初始化完成（無API模式）');
+        }, 1500);
+    }
 }
 
 // 檢查 API Key
@@ -118,6 +127,10 @@ function initBasicMap() {
             <button onclick="showApiSetup()" style="margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 20px; cursor: pointer;">設定 API</button>
         </div>
     `;
+
+    // 隱藏載入畫面（備用地圖模式）
+    hideLoadingScreen();
+    console.log('✅ 備用地圖初始化完成');
 }
 
 // 初始化事件監聽器
@@ -722,10 +735,24 @@ function generateMockData(stationName) {
 }
 
 // 工具函數
-function showLoading(show) {
-    const indicator = document.getElementById('loadingIndicator');
-    if (indicator) {
-        indicator.classList.toggle('show', show);
+function showLoadingScreen() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) {
+        loadingScreen.classList.remove('hide');
+        loadingScreen.classList.remove('fade-out');
+        console.log('📺 顯示載入畫面');
+    }
+}
+
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) {
+        loadingScreen.classList.add('fade-out');
+        // 動畫完成後完全隱藏
+        setTimeout(() => {
+            loadingScreen.classList.add('hide');
+            console.log('📺 隱藏載入畫面');
+        }, 800);
     }
 }
 
@@ -814,18 +841,18 @@ function closeApiModal() {
 // Google Maps API 回呼 - 必須在全域定義以便 API callback 使用
 window.initMap = function() {
     console.log('🗺️ Google Maps API callback 被呼叫');
-    
+
     const mapContainer = document.getElementById('map');
-    
+
     try {
         if (typeof google === 'undefined' || !google.maps) {
             throw new Error('Google Maps API 未載入');
         }
-        
+
         map = new google.maps.Map(mapContainer, {
-            center: { 
-                lat: CONFIG.API_SETTINGS.TAIPEI_CENTER.lat, 
-                lng: CONFIG.API_SETTINGS.TAIPEI_CENTER.lng 
+            center: {
+                lat: CONFIG.API_SETTINGS.TAIPEI_CENTER.lat,
+                lng: CONFIG.API_SETTINGS.TAIPEI_CENTER.lng
             },
             zoom: 13,
             mapTypeControl: true,
@@ -833,9 +860,9 @@ window.initMap = function() {
             fullscreenControl: true,
             zoomControl: true
         });
-        
+
         console.log('✅ Google Maps 初始化成功');
-        
+
         // 初始化導航服務
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({
@@ -847,7 +874,7 @@ window.initMap = function() {
                 strokeOpacity: 0.8
             }
         });
-        
+
         // 隱藏 API 提示橫幅
         const banner = document.getElementById('apiBanner');
         const message = document.getElementById('bannerMessage');
@@ -856,10 +883,18 @@ window.initMap = function() {
             banner.classList.add('success');
             setTimeout(() => banner.classList.add('hidden'), 3000);
         }
-        
+
+        // 隱藏載入畫面
+        hideLoadingScreen();
+        console.log('✅ 應用初始化完成（API模式）');
+
     } catch (error) {
         console.error('❌ Google Maps 初始化失敗:', error);
         initBasicMap();
+
+        // 即使API載入失敗也要隱藏載入畫面
+        hideLoadingScreen();
+        console.log('✅ 應用初始化完成（備用模式）');
     }
 };
 

@@ -992,8 +992,302 @@ body::after {
 }
 
 /* ==========================================
-   視覺改善 - 載入動畫與骨架屏
+   過場動畫載入畫面
    ========================================== */
+
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+    max-width: 400px;
+    width: 90%;
+}
+
+.loading-logo {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.loading-logo i {
+    font-size: 4rem;
+    color: #FFD700;
+    animation: logoPulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+}
+
+@keyframes logoPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8));
+    }
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.logo-main {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.logo-sub {
+    font-size: 1.1rem;
+    font-weight: 300;
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+.loading-animation {
+    margin: 40px 0;
+}
+
+.train-track {
+    position: relative;
+    width: 300px;
+    height: 60px;
+    margin: 0 auto;
+}
+
+.track-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #666 0%, #999 50%, #666 100%);
+    border-radius: 2px;
+    transform: translateY(-50%);
+}
+
+.track-line::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 20px,
+        rgba(255, 255, 255, 0.3) 20px,
+        rgba(255, 255, 255, 0.3) 40px
+    );
+    animation: trackMove 2s linear infinite;
+}
+
+@keyframes trackMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(40px); }
+}
+
+.train-car {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 35px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    animation: trainMove 3s ease-in-out infinite;
+}
+
+.train-car i {
+    color: white;
+    font-size: 1.2rem;
+    animation: trainShake 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes trainMove {
+    0%, 100% {
+        left: 20%;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        left: 80%;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes trainShake {
+    0% { transform: translateX(-1px); }
+    100% { transform: translateX(1px); }
+}
+
+.track-stations {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.station-dot {
+    width: 8px;
+    height: 8px;
+    background: #666;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.station-dot.active {
+    background: #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    animation: stationGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes stationGlow {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    100% {
+        transform: scale(1.2);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+    }
+}
+
+.loading-text {
+    margin: 30px 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.loading-dots span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #FFD700;
+    border-radius: 50%;
+    animation: dotBounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes dotBounce {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.loading-progress {
+    margin-top: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+    border-radius: 2px;
+    width: 0%;
+    animation: progressFill 3s ease-out forwards;
+}
+
+@keyframes progressFill {
+    0% { width: 0%; }
+    70% { width: 90%; }
+    100% { width: 100%; }
+}
+
+/* 載入畫面完成後的淡出動畫 */
+.loading-screen.fade-out {
+    animation: loadingFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes loadingFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .loading-logo i {
+        font-size: 3rem;
+    }
+
+    .logo-main {
+        font-size: 1.5rem;
+    }
+
+    .logo-sub {
+        font-size: 1rem;
+    }
+
+    .train-track {
+        width: 250px;
+        height: 50px;
+    }
+
+    .train-car {
+        width: 40px;
+        height: 28px;
+    }
+
+    .loading-text {
+        font-size: 1rem;
+    }
+}
 
 /* 骨架屏基礎樣式 */
 .skeleton {

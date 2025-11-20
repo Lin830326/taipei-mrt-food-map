@@ -8,6 +8,46 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- 過場動畫載入畫面 -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-subway"></i>
+                <div class="logo-text">
+                    <span class="logo-main">台北捷運</span>
+                    <span class="logo-sub">智能美食地圖</span>
+                </div>
+            </div>
+            <div class="loading-animation">
+                <div class="train-track">
+                    <div class="track-line"></div>
+                    <div class="train-car">
+                        <i class="fas fa-train"></i>
+                    </div>
+                    <div class="track-stations">
+                        <div class="station-dot active"></div>
+                        <div class="station-dot"></div>
+                        <div class="station-dot"></div>
+                        <div class="station-dot"></div>
+                        <div class="station-dot"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-text">
+                <span>正在載入...</span>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- API 設定提示橫幅 -->
     <div class="api-banner" id="apiBanner">
         <div class="banner-content">
