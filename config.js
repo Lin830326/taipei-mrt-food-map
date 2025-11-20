@@ -79,6 +79,17 @@ const CONFIG = {
         4: '高價 $$$$'
     },
     
+    // 價格範圍定義（用於 API 查詢）
+    // 注意：Google Places API 的 price_level 是相對等級，非具體金額
+    // 在台北，大致對應：
+    // 1 = 100-300元，2 = 300-600元，3 = 600-1200元，4 = 1200元以上
+    PRICE_RANGES: {
+        1: { min: 0, max: 1, label: '實惠（約100-300元）' },      // 只要 price_level = 1
+        2: { min: 0, max: 2, label: '平價（約100-600元）' },      // price_level <= 2
+        3: { min: 2, max: 3, label: '中等（約300-1200元）' },     // price_level 2-3
+        4: { min: 3, max: 4, label: '高價（約600元以上）' }        // price_level >= 3
+    },
+    
     // 智能評分權重
     SCORING_WEIGHTS: {
         rating: 0.4,      // 評分權重

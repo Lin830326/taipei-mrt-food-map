@@ -139,7 +139,12 @@ function initEventListeners() {
     if (priceRange && priceDisplay) {
         priceRange.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
-            const labels = ['實惠 $', '平價 $$', '中等 $$$', '高價 $$$$'];
+            const labels = [
+                '實惠 $ (約100-300元)',
+                '平價 $$ (約100-600元)', 
+                '中等 $$$ (約300-1200元)',
+                '高價 $$$$ (約600元以上)'
+            ];
             priceDisplay.textContent = labels[value - 1] || '平價 $$';
             saveUserPreference('maxPrice', value);
             if (currentStation) {
@@ -371,6 +376,17 @@ async function searchNearbyFood(stationName, options = {}) {
                 request.openNow = true;
             }
             
+            // 加入價格範圍參數
+            if (options.maxPrice && CONFIG.PRICE_RANGES[options.maxPrice]) {
+                const priceRange = CONFIG.PRICE_RANGES[options.maxPrice];
+                if (priceRange.min > 0) {
+                    request.minprice = priceRange.min;
+                }
+                if (priceRange.max < 4) {
+                    request.maxprice = priceRange.max;
+                }
+            }
+            
             console.log('🔍 搜尋請求:', request);
             
             service.nearbySearch(request, (results, status) => {
@@ -407,14 +423,18 @@ async function searchNearbyFood(stationName, options = {}) {
                         }
                     }
                     
-                    // 3. 價格過濾 - 只顯示選定價格等級的餐廳
-                    if (options.maxPrice) {
-                        // 如果餐廳沒有price_level,預設為2(平價)
-                        const placePrice = place.price_level || 2;
-                        // 只保留完全符合選定價格等級的餐廳
-                        if (placePrice !== options.maxPrice) {
-                            return false;
+                    // 3. 價格範圍驗證（API 已做初步篩選，這裡再次確認）
+                    // 注意：有些餐廳可能沒有 price_level 資料，我們會保留它們
+                    if (options.maxPrice && CONFIG.PRICE_RANGES[options.maxPrice]) {
+                        const priceRange = CONFIG.PRICE_RANGES[options.maxPrice];
+                        if (place.price_level) {
+                            // 只有當餐廳有價格資訊時才進行範圍檢查
+                            if (place.price_level < priceRange.min || place.price_level > priceRange.max) {
+                                console.log(`💰 排除價格範圍外: ${place.name} (price_level: ${place.price_level})`);
+                                return false;
+                            }
                         }
+                        // 沒有 price_level 的餐廳會被保留，但在評分時會有較低的價格分數
                     }
                     
                     // 4. 最低評分過濾
