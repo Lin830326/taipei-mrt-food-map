@@ -150,14 +150,18 @@ function initEventListeners() {
     const priceRange = document.getElementById('priceRange');
     const priceDisplay = document.getElementById('priceDisplay');
     if (priceRange && priceDisplay) {
+        // 初始化顯示當前值
+        const initialValue = parseInt(priceRange.value);
+        const labels = [
+            '實惠 $ (約100-300元)',
+            '平價 $$ (約100-600元)', 
+            '中等 $$$ (約300-1200元)',
+            '高價 $$$$ (約600元以上)'
+        ];
+        priceDisplay.textContent = labels[initialValue - 1] || '平價 $$';
+        
         priceRange.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
-            const labels = [
-                '實惠 $ (約100-300元)',
-                '平價 $$ (約100-600元)', 
-                '中等 $$$ (約300-1200元)',
-                '高價 $$$$ (約600元以上)'
-            ];
             priceDisplay.textContent = labels[value - 1] || '平價 $$';
             saveUserPreference('maxPrice', value);
             if (currentStation) {
@@ -756,6 +760,13 @@ function hideLoadingScreen() {
     }
 }
 
+function showLoading(show) {
+    const indicator = document.getElementById('loadingIndicator');
+    if (indicator) {
+        indicator.classList.toggle('show', show);
+    }
+}
+
 function updateSearchStats(count, total) {
     const stats = document.getElementById('searchStats');
     if (stats) {
@@ -784,7 +795,21 @@ function loadUserPreferences() {
         const foodType = localStorage.getItem('mrt_food_foodType');
         
         if (radius) document.getElementById('radiusSelect').value = JSON.parse(radius);
-        if (maxPrice) document.getElementById('priceRange').value = JSON.parse(maxPrice);
+        if (maxPrice) {
+            const priceValue = JSON.parse(maxPrice);
+            document.getElementById('priceRange').value = priceValue;
+            // 更新價格顯示文字
+            const labels = [
+                '實惠 $ (約100-300元)',
+                '平價 $$ (約100-600元)', 
+                '中等 $$$ (約300-1200元)',
+                '高價 $$$$ (約600元以上)'
+            ];
+            const priceDisplay = document.getElementById('priceDisplay');
+            if (priceDisplay) {
+                priceDisplay.textContent = labels[priceValue - 1] || '平價 $$';
+            }
+        }
         if (sortBy) document.getElementById('sortSelect').value = JSON.parse(sortBy);
         if (openNow) document.getElementById('openNowCheck').checked = JSON.parse(openNow);
         if (foodType) selectedFoodType = JSON.parse(foodType);
